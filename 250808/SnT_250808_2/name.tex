@@ -1,0 +1,45 @@
+\documentclass{simplesnt}
+
+\usepackage{kotex}
+\usepackage[korean]{datetime2}
+\DTMsetdatestyle{iso} 
+
+
+%% Helpful packages
+
+\usepackage{listings}
+\lstset{basicstyle = \small\ttfamily, breaklines}
+
+\usepackage{tabularray}
+\UseTblrLibrary{booktabs}
+
+\usepackage{metalogo} % For XeTeX logo
+\usepackage{kotex-logo}
+
+\newcommand*{\presentfont}[1]{{\fontspec{#1}#1}}
+\ExplSyntaxOn
+\bool_if:nF { \sys_if_engine_xetex_p: || \sys_if_engine_luatex_p: }
+  { \newcommand*{\fontspec}[1]{} }
+\ExplSyntaxOff
+
+\title{\texttt{분석기 취약점 파고들기}}
+\author{정원준}
+
+\begin{document}
+\maketitle
+
+\section{정적 분석이 무엇인가}
+
+
+
+
+
+
+
+
+
+
+\section{공격의 동기}
+\section{목표}
+
+\end{document}

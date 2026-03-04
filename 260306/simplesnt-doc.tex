@@ -1,0 +1,209 @@
+% !TeX root = simplesnt-doc.tex
+\documentclass{simplesnt}
+
+%% Helpful packages
+\usepackage{simplebnf}[2023/11/25]
+\usepackage{kotex}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage{amsfonts}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{siunitx}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{mathrsfs}
+\usepackage{stmaryrd}
+\usepackage{graphicx}
+
+\captionsetup{font=small}
+\lstset{basicstyle = \small\ttfamily, breaklines}
+
+\usepackage{tabularray}
+\UseTblrLibrary{booktabs}
+
+\usepackage{metalogo}
+\usepackage{kotex-logo}
+
+
+\newcommand{\textalt}[2]{#1\textsubscript{\ensuremath{\text{\scriptsize\textit{#2}}}}}
+\newcommand*{\presentfont}[1]{{\fontspec{#1}#1}}
+\ExplSyntaxOn
+\bool_if:nF { \sys_if_engine_xetex_p: || \sys_if_engine_luatex_p: }
+  { \newcommand*{\fontspec}[1]{} }
+\ExplSyntaxOff
+
+\title{정적 분석 골탕먹이기 논문 리뷰}
+\author{정원준}
+
+\begin{document}
+\date{2026년 3월 6일}
+\maketitle
+
+
+\begin{frame}
+  \frametitle{목차}
+  \tableofcontents
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{슬라이드 제목}
+  결론 대뜸 박기
+\end{frame}
+
+\section{논문 소개}
+\begin{frame}
+  \frametitle{제목}
+  
+  \vspace{38pt}
+
+  \includegraphics[
+    width=1\linewidth
+  ]{img/제목.png}
+
+  \begin{tikzpicture}[overlay, remember picture]
+    \uncover<1>{
+        \fill[white] (0,0) rectangle (12,1.3);
+        \fill[white] (0,0) rectangle (1.8,2);
+    }
+    \uncover<2>{
+        \fill[white] (0,0) rectangle (12,1.3);
+    }
+    \uncover<3>{
+    }
+  \end{tikzpicture}
+
+  \vspace{-20pt}
+
+  \begin{align*}
+    \uncover<1->{P_1 \approx P_2 &\overset{\mathrm{def}}{\iff} \llbracket P_1 \rrbracket = \llbracket P_2 \rrbracket}  \\
+    \uncover<2->{P_1 \approx^{\mathcal{A}} P_2 &\overset{\mathrm{def}}{\iff} \llbracket P_1 \rrbracket^{\mathcal{A}} = \llbracket P_2 \rrbracket^{\mathcal{A}}} \\
+  \end{align*}
+
+\end{frame}
+
+
+\section{배경}
+\begin{frame}
+  \frametitle{의미구조}
+  \includegraphics[scale=0.8]{img/의미구조.png}
+\end{frame}
+
+\begin{frame}
+  \frametitle{요약의미구조}
+  \includegraphics[scale=0.8]{img/요약의미구조.png}
+\end{frame}
+
+\begin{frame}
+  \frametitle{가정}
+  \uncover<1->{1. Galois insertion}
+
+  \uncover<2>{갈루아커넥션 기본 그림}
+
+  \uncover<3->{갈루아커넥션 확장 그림}
+
+  \uncover<4->{갈루아인서션 그림}
+
+  보통 인서션이다 설명~ (오약 도메인에 쓸데없는 원소가 있거나, 중복이 있으면 인서션이 안 됨)
+  왜 인서션이라고 부르는지 설명~
+
+\end{frame}
+\begin{frame}
+  \frametitle{가정}
+  \uncover<1->{2. strict or trivial domain}
+
+  보통 strict domain이다 설명~
+
+  \uncover<2->{3. recursive or trivial abstraction}
+
+  \uncover<3->{4. x := e 을 최고로 잘 어림잡는 분석기를 가정}
+
+  즉, 의미 있고, 깔끔하고, 가장 강한 분석기에 대해서 공격을 하는 것 -> 약한 분석기에 대해서는 당연히 가능
+\end{frame}
+
+
+\section{목표}
+\begin{frame}
+  \frametitle{정적 분석기 골탕먹이기}
+  \uncover<1->{입력 프로그램 P가 주어졌을 때, P의 실행 의미는 보존하면서 요약해석 결과는 더 커지게 하는 변환 tau(P)를 만들자}
+  
+  \uncover<2->{\includegraphics[scale=0.7]{img/목표.png}}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{연구 주제와 비교}
+  실행 의미는 top이 아니지만, 요약해석 결과는 top이 되는 프로그램을 만들자(특정 변수 x에 대해서)
+\end{frame}
+
+\section{주요 아이디어}
+\begin{frame}
+  \frametitle{슬라이드 제목}
+  요약해석이 제대로 걸러내지 못하는 (상태 집합)if문을 만들자
+  요약해석이 제대로 요약하지 못하는 정수 집합을 만들자
+\end{frame}
+
+
+
+\section{세 가지 방법}
+\begin{frame}
+  \frametitle{7 REDUCING COMPLETENESS TO INCOMPLETENESS}
+  \includegraphics[scale=0.8]{img/7장 아이디어.png}
+  \includegraphics[scale=0.8]{img/7장 예시.png}
+
+  variable finite인 경우, 상태집합중 alpha gamma 적용하면 더 커지는 게 존재하므로, 그걸 조건식으로 넣으면 됨
+\end{frame}
+
+\begin{frame}
+  \frametitle{8 RICE EXTENSIONALITY OF THE ABSTRACT SEMANTICS}
+  \includegraphics[scale=0.8]{img/8장 아이디어.png}
+
+  variable finite가 아닌 경우, *변환은 아니지만* 늘어난 변수에 대해 조건문 만들면 됨
+\end{frame}
+
+\begin{frame}
+  \frametitle{9 MAKING ABSTRACTIONS INCOMPLETE BY DATA-FLOW TRANSFORMATIONS}
+  \includegraphics[scale=0.8]{img/9장 아이디어.png}
+  \includegraphics[scale=0.8]{img/9장 예시.png}
+
+  서로 (부분)역함수 관계에 있는 두 함수를 사용해서 요약해석이 제대로 요약하지 못하는 정수 집합으로 다녀오면 됨
+  항상 가능한 건 아님
+\end{frame}
+
+\section{결론}
+\begin{frame}
+  \frametitle{결론}
+  이런저런 경우에 저런 변환이 항상 존재
+  분석기가 제대로 분석하지 못하는 프로그램들의 집합으로도, 기계적인 계산을 다 할 수 있음
+\end{frame}
+
+
+\section{한계점 및 발전 방향}
+\begin{frame}
+  \frametitle{한계점}
+  계속 ``존재성''만 얘기하고, 증명하고 있음
+  구체적으로 어떻게 프로그램을 변환하거나 찾는지에 대한 내용이 전혀 없음
+
+  그걸 찾는게 내 목표...인데
+  잘 정해진 조건 하에서 불가능을 증명해야 할 수도 있음
+
+
+  (나) 골탕먹이는 프로그램의 존재성은 rice theorem에서 즉각적으로 나왔는데, 
+  (논문) 변환의 존재성은 변환의 기초 구조를 제시한 후 몇 단계를 더 들어가봐야 증명이 가능했음
+\end{frame}
+
+\begin{frame}
+  \frametitle{발전 방향}
+  사실 나도 존재성에만 의지했지, 기계적으로 찾아낼 수 있다는 보장을 가지고 출발한 것이 아님 <- 돌아봐야 할 부분
+  이 논문의 아이디어를 응용해서 if문으로 구성된 기본 틀을 주고, 그 안을 합성하게 하는 방법을 생각해 봐야겠음
+  if문 말고 while문을 기본 틀로 주는 것도 가능할지도(논문에서는 while문을 제대로 다뤘다고 보기 힘듦)
+  while문으로 주면, rice theorem을 직접적으로 사용하기도 하니
+
+  "실제로는 top이 아니다" 를 어떻게 구성하면서 합성해나갈지는 여전히 남아 있는 문제
+
+  다른 난독화 관련 논문들도 뒤져보기
+\end{frame}
+
+
+\end{document}
