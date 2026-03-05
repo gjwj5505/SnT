@@ -14,7 +14,9 @@
 \usepackage{listings}
 \usepackage{mathrsfs}
 \usepackage{stmaryrd}
+\usepackage{subcaption}
 \usepackage{graphicx}
+
 
 \captionsetup{font=small}
 \lstset{basicstyle = \small\ttfamily, breaklines}
@@ -87,85 +89,257 @@
 \section{배경}
 \begin{frame}
   \frametitle{의미구조}
-  \includegraphics[scale=0.8]{img/의미구조.png}
+  \includegraphics[scale=0.24]{img/의미구조.png}
 \end{frame}
 
 \begin{frame}
   \frametitle{요약의미구조}
-  \includegraphics[scale=0.8]{img/요약의미구조.png}
+  \includegraphics[scale=0.3]{img/요약의미구조.png}
+\end{frame}
+
+\begin{frame}
+  \frametitle{가정}
+  \uncover<1->{1. Galois insertion}
+  \begin{figure}[h]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \uncover<2->{
+          \includegraphics[width=\linewidth,height=0.75\textheight,keepaspectratio]{img/갈루아커넥션1.png}
+        }
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \uncover<3->{
+          \includegraphics[width=\linewidth,height=0.75\textheight,keepaspectratio]{img/갈루아커넥션2.png}
+        }
+    \end{subfigure}
+  \end{figure}
+\end{frame}
+
+\begin{frame}
+  \frametitle{가정}
+  \uncover<1->{1. Galois insertion}
+  \begin{figure}[h]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \uncover<2->{
+          \includegraphics[width=\linewidth,height=0.75\textheight,keepaspectratio]{img/갈루아인서션1.png}
+        }
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \uncover<3->{
+          \includegraphics[width=\linewidth,height=0.75\textheight,keepaspectratio]{img/갈루아인서션2.png}
+        }
+    \end{subfigure}
+  \end{figure}
 \end{frame}
 
 \begin{frame}
   \frametitle{가정}
   \uncover<1->{1. Galois insertion}
 
-  \uncover<2>{갈루아커넥션 기본 그림}
+  \uncover<2->{2. strict or trivial domain}
 
-  \uncover<3->{갈루아커넥션 확장 그림}
+  \uncover<3->{3. recursive or trivial abstraction}
 
-  \uncover<4->{갈루아인서션 그림}
+  \uncover<4->{의미 있고, 깔끔한 분석기를 가정}
 
-  보통 인서션이다 설명~ (오약 도메인에 쓸데없는 원소가 있거나, 중복이 있으면 인서션이 안 됨)
-  왜 인서션이라고 부르는지 설명~
+  \uncover<5->{4. x := e 를 최고로 잘 어림잡는 분석기를 가정}
 
-\end{frame}
-\begin{frame}
-  \frametitle{가정}
-  \uncover<1->{2. strict or trivial domain}
+  \uncover<6->{
+    매우 강한 분석기를 가정
+  }
+  \uncover<7->{
+    -> 약한 분석기에 대해서는 당연히 공격 가능
+  }
 
-  보통 strict domain이다 설명~
-
-  \uncover<2->{3. recursive or trivial abstraction}
-
-  \uncover<3->{4. x := e 을 최고로 잘 어림잡는 분석기를 가정}
-
-  즉, 의미 있고, 깔끔하고, 가장 강한 분석기에 대해서 공격을 하는 것 -> 약한 분석기에 대해서는 당연히 가능
 \end{frame}
 
 
 \section{목표}
 \begin{frame}
   \frametitle{정적 분석기 골탕먹이기}
-  \uncover<1->{입력 프로그램 P가 주어졌을 때, P의 실행 의미는 보존하면서 요약해석 결과는 더 커지게 하는 변환 tau(P)를 만들자}
+  \uncover<1->{입력 프로그램 $P$가 주어졌을 때, $P$의 실행 의미는 보존하면서 요약해석 결과는 더 커지게 하는 변환 $\tau(P)$를 만들자}
+
+  \vspace{20pt}
   
-  \uncover<2->{\includegraphics[scale=0.7]{img/목표.png}}
+  \uncover<2->{\includegraphics[scale=0.3]{img/목표.png}}
 
 \end{frame}
 
 \begin{frame}
   \frametitle{연구 주제와 비교}
-  실행 의미는 top이 아니지만, 요약해석 결과는 top이 되는 프로그램을 만들자(특정 변수 x에 대해서)
+  \uncover<1->{실행 의미는 $\top$이 아니지만, 요약해석 결과는 $\top$이 되는 프로그램 $P$를 만들자(특정 변수 x에 대해서)}
+  \begin{align*}
+    \uncover<2->{(\llbracket P \rrbracket \mathbb{S})\texttt{x} &\neq \top} \\
+    \uncover<2->{(\llbracket P \rrbracket^{\mathcal{A}}\alpha(\mathbb{S}))\texttt{x} &= \top} \\
+    \uncover<3->{\alpha(\llbracket P \rrbracket \mathbb{S}) &< \llbracket P \rrbracket^{\mathcal{A}}\alpha(\mathbb{S})}
+  \end{align*}
+
+  \uncover<4->{\includegraphics[scale=0.3]{img/목표.png}}
 \end{frame}
 
 \section{주요 아이디어}
-\begin{frame}
-  \frametitle{슬라이드 제목}
-  요약해석이 제대로 걸러내지 못하는 (상태 집합)if문을 만들자
-  요약해석이 제대로 요약하지 못하는 정수 집합을 만들자
+\begin{frame}[fragile]
+  \frametitle{주요 아이디어}
+  
+  \uncover<1->{요약해석이 제대로 걸러내지 못하는 상태 집합(if문)을 만들자}
+  \begin{center}
+    \begin{minipage}{0.5\textwidth}
+      % uncover 대신 visibleenv 등을 사용하여 환경 전체를 감싸기
+      \begin{visibleenv}<2-> 
+        \begin{lstlisting}[numbers=left, escapeinside={(*@}{@*)}]
+if (*@\textcolor{red}{절대 통과 못하는 조건문}@*)
+  (*@이상한 일을 한다@*)
+(*@$P$@*)
+        \end{lstlisting}
+      \end{visibleenv}
+    \end{minipage}
+  \end{center}
+
+  \hfill
+
+  \uncover<3->{요약해석이 제대로 요약하지 못하는 정수 집합을 만들자}
+  \begin{center}
+    \begin{minipage}{0.3\textwidth}
+      \begin{visibleenv}<4-> 
+        \begin{lstlisting}[numbers=left, numberstyle=\small, basicstyle=\small\ttfamily, numbersep=8pt, escapeinside={(*@}{@*)}]
+x = (*@\textcolor{red}{1 or 5}@*)
+        \end{lstlisting}
+      \end{visibleenv}
+    \end{minipage}
+  \end{center}
+
 \end{frame}
 
 
 
 \section{세 가지 방법}
+
+
 \begin{frame}
   \frametitle{7 REDUCING COMPLETENESS TO INCOMPLETENESS}
-  \includegraphics[scale=0.8]{img/7장 아이디어.png}
-  \includegraphics[scale=0.8]{img/7장 예시.png}
+  
+  \includegraphics[scale=0.3]{img/7장 예시.png}
 
-  variable finite인 경우, 상태집합중 alpha gamma 적용하면 더 커지는 게 존재하므로, 그걸 조건식으로 넣으면 됨
+  {  
+    \large
+    \[
+    \begin{aligned}
+      &\uncover<2->{\llbracket \tau(P) \rrbracket = \llbracket P \rrbracket ?} ~~~~ \uncover<3->{OK!}\\
+      &\uncover<4->{\llbracket P \rrbracket^{\mathcal{A}}\alpha(S) < \llbracket \tau(P) \rrbracket^{\mathcal{A}}\alpha(S) ?} ~~~~ \uncover<5-> {OK!}
+    \end{aligned}
+    \]
+  }
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{7 REDUCING COMPLETENESS TO INCOMPLETENESS}
+
+  \uncover<1->{
+    1. variable finite인 경우
+
+    \includegraphics[scale=0.15]{img/variable finite.png}
+  }
+
+  \uncover<2->{
+    2. Rice Theorem의 도움으로,
+
+    \includegraphics[scale=0.2]{img/rice theorem의 도움.png}
+    인 $S$가 존재
+  }
+
+  \uncover<3->{
+    3. variable finiteness를 이용하여
+
+    \includegraphics[scale=0.2]{img/m' 찾기.png}
+    인 $\mathbb{m}'$이 존재
+  }
+
 \end{frame}
 
 \begin{frame}
-  \frametitle{8 RICE EXTENSIONALITY OF THE ABSTRACT SEMANTICS}
-  \includegraphics[scale=0.8]{img/8장 아이디어.png}
+  \frametitle{7 REDUCING COMPLETENESS TO INCOMPLETENESS}
 
-  variable finite가 아닌 경우, *변환은 아니지만* 늘어난 변수에 대해 조건문 만들면 됨
+  \includegraphics[scale=0.15]{img/variable finite.png}
+
+  \includegraphics[scale=0.2]{img/rice theorem의 도움.png}
+
+  \includegraphics[scale=0.2]{img/m' 찾기.png}
+
+  \uncover<2->{
+    4. 다음과 같이 프로그램 변환
+
+    \includegraphics[scale=0.3]{img/7장 아이디어.png}
+  }
+  \vspace{-12pt}
+  {  
+    \large
+    \[
+    \begin{aligned}
+      &\uncover<3->{\llbracket \tau(P) \rrbracket = \llbracket P \rrbracket ?} ~~~~ \uncover<4->{OK!}\\
+      &\uncover<5->{\llbracket P \rrbracket^{\mathcal{A}}\alpha(S) < \llbracket \tau(P) \rrbracket^{\mathcal{A}}\alpha(S) ?} ~~~~ \uncover<6-> {OK!}
+    \end{aligned}
+    \]
+  }
+
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{8 RICE EXTENSIONALITY OF THE ABSTRACT SEMANTICS}
+  \uncover<1->{
+    variable finite가 아닌 경우
+
+    \includegraphics[scale=0.15]{img/not variable finite.png} 인 $S$ 존재
+  }
+  
+  \uncover<2->{
+    $x$와 $\mathbb{m}$을 잘 잡아서
+
+    \includegraphics[scale=0.3]{img/8장 아이디어.png}
+  }
+  
+  {  
+    \large
+    \[
+    \begin{aligned}
+      &\uncover<3->{\llbracket P \rrbracket = \llbracket Q \rrbracket = \bot} \\
+      &\uncover<4->{\llbracket P \rrbracket^{\mathcal{A}} < \llbracket Q \rrbracket^{\mathcal{A}}}
+    \end{aligned}
+    \]
+  }
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{8 RICE EXTENSIONALITY OF THE ABSTRACT SEMANTICS}
+
+  \includegraphics[scale=0.15]{img/not variable finite.png}
+  \includegraphics[scale=0.3]{img/8장 아이디어.png}
+  
+  {  
+    \large
+    \[
+    \begin{aligned}
+      &\uncover<2->{\llbracket P \rrbracket = \llbracket Q \rrbracket = \bot} \\
+      &\uncover<3->{\llbracket P \rrbracket^{\mathcal{A}} < \llbracket Q \rrbracket^{\mathcal{A}}}
+    \end{aligned}
+    \]
+  }
 \end{frame}
 
 \begin{frame}
   \frametitle{9 MAKING ABSTRACTIONS INCOMPLETE BY DATA-FLOW TRANSFORMATIONS}
-  \includegraphics[scale=0.8]{img/9장 아이디어.png}
-  \includegraphics[scale=0.8]{img/9장 예시.png}
+  \includegraphics[scale=0.1]{img/9장 아이디어.png}
+  \includegraphics[scale=0.2]{img/9장 예시.png}
 
   서로 (부분)역함수 관계에 있는 두 함수를 사용해서 요약해석이 제대로 요약하지 못하는 정수 집합으로 다녀오면 됨
   항상 가능한 건 아님
