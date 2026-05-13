@@ -35,11 +35,11 @@
   { \newcommand*{\fontspec}[1]{} }
 \ExplSyntaxOff
 
-\title{정적 분석 골탕먹이기 논문 리뷰}
+\title{Big-Step 증명나무 합성으로 분석기 골탕먹이기}
 \author{정원준}
 
 \begin{document}
-\date{2026년 3월 6일}
+\date{2026년 5월 15일}
 \maketitle
 
 
@@ -50,403 +50,194 @@
 
 
 
-\section{논문 소개}
-\begin{frame}
-  \frametitle{무슨 논문인가}
-  \begin{itemize}
-    \uncover<2->{\item 정적 분석의 취약점을 파고드는 논문}
-    \uncover<3->{\item 연구실, SIGPL, 신년교례회}
-    \uncover<4->{\item 정적 분석기가 실제보다 크게 어림잡는 프로그램을 만드는 방법을 제시}
-    \uncover<5->{\item 그러나, 그 구체적인 알고리즘까지는 찾지 못함}
-  \end{itemize}
-\end{frame}
+\section{정적 분석기의 부정확성}
+\begin{frame}[c, fragile]
+  \frametitle{정적 분석이란?}
 
-\begin{frame}
-  \frametitle{제목}
-  
-  \vspace{38pt}
+  \setlength{\columnsep}{16pt}
 
-  \includegraphics[
-    width=1\linewidth
-  ]{img/제목.png}
-
-  \begin{tikzpicture}[overlay, remember picture]
-    \uncover<1>{
-        \fill[white] (0,0) rectangle (12,1.3);
-        \fill[white] (0,0) rectangle (1.8,2);
-    }
-    \uncover<2>{
-        \fill[white] (0,0) rectangle (12,1.3);
-    }
-    \uncover<3>{
-    }
-  \end{tikzpicture}
-
-  \vspace{-20pt}
-
-  \begin{align*}
-    \uncover<1->{P_1 \approx P_2 &\overset{\mathrm{def}}{\iff} \llbracket P_1 \rrbracket = \llbracket P_2 \rrbracket}  \\
-    \uncover<2->{P_1 \approx^{\mathcal{A}} P_2 &\overset{\mathrm{def}}{\iff} \llbracket P_1 \rrbracket^{\mathcal{A}} = \llbracket P_2 \rrbracket^{\mathcal{A}}} \\
-  \end{align*}
-
-\end{frame}
-
-
-\section{배경}
-\begin{frame}
-  \frametitle{의미구조}
-  \vfill
-  \begin{figure}
-      \centering
-      \includegraphics[scale=0.24]{img/의미구조.png}
-  \end{figure}
-  \vfill
-\end{frame}
-
-\begin{frame}
-  \frametitle{요약의미구조}
-  \vfill
-  \begin{figure}
-      \centering
-      \includegraphics[scale=0.3]{img/요약의미구조.png}
-  \end{figure}
-  \vfill
-\end{frame}
-
-\begin{frame}
-  \frametitle{가정}
-  \uncover<1->{1. Galois insertion}
-  \begin{figure}[h]
-    \centering
-    \begin{subfigure}{0.45\textwidth}
-        \centering
-        \uncover<2->{
-          \includegraphics[width=\linewidth,height=0.75\textheight,keepaspectratio]{img/갈루아커넥션1.png}
-        }
-    \end{subfigure}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.46\textwidth}
     \hfill
-    \begin{subfigure}{0.45\textwidth}
-        \centering
-        \uncover<3->{
-          \includegraphics[width=\linewidth,height=0.75\textheight,keepaspectratio]{img/갈루아커넥션2.png}
-        }
-    \end{subfigure}
-  \end{figure}
-\end{frame}
+    \begin{minipage}{0.78\linewidth}
+    \lstset{
+      language=Python,
+      basicstyle=\ttfamily\small,
+      lineskip=2pt,
+      columns=fullflexible,
+      escapeinside={(*@}{@*)},
+    }
+    \begin{lstlisting}
+x = 1
+while x < 10000:
+    (*@\textcolor{red}{x = x + 1}@*)
+print(x)
+    \end{lstlisting}
+    \end{minipage}
 
-\begin{frame}
-  \frametitle{가정}
-  \uncover<1->{1. Galois insertion}
-  \begin{figure}[h]
-    \centering
-    \begin{subfigure}{0.45\textwidth}
-        \centering
-        \uncover<2->{
-          \includegraphics[width=\linewidth,height=0.75\textheight,keepaspectratio]{img/갈루아인서션1.png}
-        }
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}{0.45\textwidth}
-        \centering
-        \uncover<3->{
-          \includegraphics[width=\linewidth,height=0.75\textheight,keepaspectratio]{img/갈루아인서션2.png}
-        }
-    \end{subfigure}
-  \end{figure}
-\end{frame}
-
-\begin{frame}
-  \frametitle{가정}
-  \uncover<1->{1. Galois insertion}
-
-  \uncover<2->{2. strict or trivial domain}
-
-  \uncover<3->{3. recursive or trivial abstraction}
-
-  \uncover<4->{의미 있고, 깔끔한 분석기를 가정}
-
-  \uncover<5->{4. x := e 를 최고로 잘 어림잡는 분석기를 가정}
-
-  \uncover<6->{
-    $\rightarrow$ 약한 분석기에 대해서는 당연히 공격 가능
-  }
+    \column{0.54\textwidth}
+    \vspace{8pt}
+    \begin{itemize}
+      \item<2-> x가 어떤 값을 가질 수 있을까?
+      \item<3-> x가 특정 위치에서 어떤 값을 가질 수 있을까?
+      \item<4-> 프로그램을 돌려보지 않고 미리 알 수는 없을까?
+      \item<5-> \textcolor{red}{완벽하게 알 수는 없음!}
+    \end{itemize}
+  \end{columns}
 
 \end{frame}
-
-
-\section{목표}
-\begin{frame}
-  \frametitle{정적 분석기 골탕먹이기}
-  \uncover<1->{입력 프로그램 $P$가 주어졌을 때, $P$의 실행 의미는 보존하면서 요약해석 결과는 더 커지게 하는 변환 $\tau(P)$를 만들자}
-
-  \vspace{20pt}
-  
-  \uncover<2->{\includegraphics[scale=0.3]{img/목표.png}}
-
-\end{frame}
-
-\begin{frame}
-  \frametitle{연구 주제와 비교}
-  \uncover<1->{non-relational domain 가정. 실행 의미는 $\top$이 아니지만, 요약해석 결과는 $\top$이 되는 프로그램 $P$를 만들자(특정 변수 x에 대해서)}
-  \begin{align*}
-    \uncover<2->{(\alpha(\llbracket P \rrbracket \mathbb{S}))\texttt{x} &\neq \top} \\
-    \uncover<2->{(\llbracket P \rrbracket^{\mathcal{A}}\alpha(\mathbb{S}))\texttt{x} &= \top} \\
-    \uncover<3->{\alpha(\llbracket P \rrbracket \mathbb{S}) &< \llbracket P \rrbracket^{\mathcal{A}}\alpha(\mathbb{S})}
-  \end{align*}
-
-  \uncover<4->{\includegraphics[scale=0.3]{img/목표.png}}
-\end{frame}
-
-\section{주요 아이디어}
 \begin{frame}[fragile]
-  \frametitle{주요 아이디어}
-  
-  \uncover<1->{요약해석이 제대로 걸러내지 못하는 상태 집합(if문)을 만들자}
+  \frametitle{넓게 어림잡기}
+
   \begin{center}
-    \begin{minipage}{0.5\textwidth}
-      % uncover 대신 visibleenv 등을 사용하여 환경 전체를 감싸기
-      \begin{visibleenv}<2-> 
-        \begin{lstlisting}[numbers=left, escapeinside={(*@}{@*)}]
-if (*@\textcolor{red}{절대 통과 못하는 조건문}@*)
-  (*@이상한 일을 한다@*)
-(*@$P$@*)
-        \end{lstlisting}
-      \end{visibleenv}
+    \begin{minipage}{0.34\linewidth}
+      \begin{lstlisting}[basicstyle=\small\ttfamily, escapeinside={(*@}{@*)}]
+if x > 0:
+    x = 3
+else:
+    x = -3
+(*@\texttt{print(x)}@*)
+      \end{lstlisting}
     \end{minipage}
   \end{center}
 
-  \hfill
+  \vspace{12pt}
 
-  \uncover<3->{요약해석이 제대로 요약하지 못하는 정수 집합을 만들자}
   \begin{center}
-    \begin{minipage}{0.3\textwidth}
-      \begin{visibleenv}<4-> 
-        \begin{lstlisting}[numbers=left, numberstyle=\small, basicstyle=\small\ttfamily, numbersep=8pt, escapeinside={(*@}{@*)}]
-x = (*@\textcolor{red}{1 or 5}@*)
-        \end{lstlisting}
+    \begin{tikzpicture}[x=0.75cm, y=0.75cm]
+      \draw[<->, thick] (-5.7,0) -- (5.7,0);
+      \foreach \x in {-5,-4,...,5} {
+        \draw[thick] (\x,0.12) -- (\x,-0.12);
+        \node[below] at (\x,-0.18) {\(\x\)};
+      }
+      \uncover<2->{
+        \fill[red] (-3,0) circle (3pt);
+        \fill[red] (3,0) circle (3pt);
+      }
+      \uncover<3->{
+        \draw[blue, line width=2pt]
+          (-3.18,-0.32) -- (-3.4,-0.32) -- (-3.4,0.32) -- (-3.18,0.32);
+        \draw[blue, line width=2pt]
+          (3.18,-0.32) -- (3.4,-0.32) -- (3.4,0.32) -- (3.18,0.32);
+        \node[blue, above] at (0,0.5) {\([ -3, 3 ]\)};
+        \fill[red] (-3,0) circle (3pt);
+        \fill[red] (3,0) circle (3pt);
+      }
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{공격 프로그램의 예시}
+
+  \begin{center}
+    \begin{minipage}{0.34\linewidth}
+      \begin{visibleenv}<2->
+      \begin{lstlisting}[basicstyle=\small\ttfamily, escapeinside={(*@}{@*)}]
+if x > 0:
+    x = 3
+else:
+    x = -3
+(*@\only<2>{\texttt{print(x)}}\only<3->{\textcolor{red}{\texttt{y = 10 / x}}}@*)
+      \end{lstlisting}
       \end{visibleenv}
     \end{minipage}
+    \makebox[0pt][l]{\hspace{16pt}\visible<3->{\textcolor{red}{false alarm 발생}}}
   \end{center}
 
-\end{frame}
+  \vspace{12pt}
 
-
-
-\section{세 가지 방법}
-
-
-\begin{frame}
-  \frametitle{7 REDUCING COMPLETENESS TO INCOMPLETENESS}
-  
-  \includegraphics[scale=0.3]{img/7장 예시.png}
-
-  {  
-    \large
-    \[
-    \begin{aligned}
-      &\uncover<2->{\llbracket \tau(P) \rrbracket = \llbracket P \rrbracket ?} ~~~~ \uncover<3->{OK!}\\
-      &\uncover<4->{\llbracket P \rrbracket^{\mathcal{A}}\alpha(S) < \llbracket \tau(P) \rrbracket^{\mathcal{A}}\alpha(S) ?} ~~~~ \uncover<5-> {OK!}
-    \end{aligned}
-    \]
-  }
-
-\end{frame}
-
-
-\begin{frame}
-  \frametitle{7 REDUCING COMPLETENESS TO INCOMPLETENESS}
-
-  \uncover<1->{
-    1. variable finite인 경우
-
-    \includegraphics[scale=0.15]{img/variable finite.png}
-  }
-
-  \uncover<2->{
-    2. Halting Problem의 도움으로,
-
-    $\vcenter{\hbox{\includegraphics[scale=0.2]{img/rice theorem의 도움.png}}}$ 인 $S$가 존재
-  }
-
-  \uncover<3->{
-    3. variable finiteness를 이용하여
-
-    $\vcenter{\hbox{\includegraphics[scale=0.2]{img/m' 찾기.png}}}$ 
-    인 $\mathbb{m}'$이 존재
-  }
-
-\end{frame}
-
-\begin{frame}
-  \frametitle{7 REDUCING COMPLETENESS TO INCOMPLETENESS}
-
-  \includegraphics[scale=0.15]{img/variable finite.png}
-
-  \includegraphics[scale=0.2]{img/rice theorem의 도움.png}
-
-  \includegraphics[scale=0.2]{img/m' 찾기.png}
-
-  \uncover<2->{
-    4. 다음과 같이 프로그램 변환
-
-    \includegraphics[scale=0.3]{img/7장 아이디어.png}
-  }
-  \vspace{-2pt}
-  {  
-    \large
-    \[
-    \begin{aligned}
-      \uncover<3->{\llbracket \tau(P) \rrbracket = \llbracket P \rrbracket ?} ~~~~ \uncover<4->{OK!}\\
-      \uncover<5->{\llbracket \tau(P) \rrbracket^{\mathcal{A}}\alpha(S) > \llbracket P \rrbracket^{\mathcal{A}}\alpha(S) ?} ~~~~ \uncover<6-> {OK!}
-    \end{aligned}
-    \]
-  }
-
-\end{frame}
-
-
-\begin{frame}
-  \frametitle{8 RICE EXTENSIONALITY OF THE ABSTRACT SEMANTICS}
-  \uncover<1->{
-    variable finite가 아닌 경우
-
-    $\vcenter{\hbox{\includegraphics[scale=0.15]{img/not variable finite.png}}}$
-  }
-  
-  \uncover<2->{
-    $x$와 $\mathbb{m}$을 잘 잡아서
-
-    \includegraphics[scale=0.3]{img/8장 아이디어.png}
-  }
-
-\end{frame}
-
-
-\begin{frame}
-  \frametitle{8 RICE EXTENSIONALITY OF THE ABSTRACT SEMANTICS}
-
-  \includegraphics[scale=0.15]{img/not variable finite.png}
-  \includegraphics[scale=0.3]{img/8장 아이디어.png}
-  
-  \vspace{-7pt}
-
-  {  
-    \large
-    \[
-    \begin{aligned}
-      \uncover<2->{\llbracket P \rrbracket = \llbracket Q \rrbracket = \bot} \\
-      \uncover<3->{\llbracket P \rrbracket^{\mathcal{A}}\alpha(S) < \llbracket Q \rrbracket^{\mathcal{A}}\alpha(S)}
-    \end{aligned}
-    \]
-  }
-\end{frame}
-
-\begin{frame}
-  \frametitle{9 MAKING ABSTRACTIONS INCOMPLETE BY DATA-FLOW TRANSFORMATIONS}
-
-  (부분)역함수 관계에 있는 두 함수 $g, h$를 이용
-
-  \includegraphics[scale=0.08]{img/9장 아이디어.png}
-  
-  \vspace{5pt}
-
-  \uncover<2->{
-    \includegraphics[scale=0.22]{img/9장 예시.png}
-  }
-\end{frame}
-
-\begin{frame}
-  \frametitle{9 MAKING ABSTRACTIONS INCOMPLETE BY DATA-FLOW TRANSFORMATIONS}
-
-  \includegraphics[scale=0.22]{img/9장 예시.png}
-
-  \uncover<2->{
-    \includegraphics[scale=0.15]{img/9장 P.png}
-  }
-
-  \uncover<3->{
-    $S = \mathbb{m}[x \mapsto \mathbb{N}]$ 라고 두면,
-  }
-  {  
-    \large
-    \[
-    \begin{aligned}
-      \uncover<4->{\llbracket P_{x,g};P_{x,h};P \rrbracket = \llbracket P \rrbracket ?} ~~~~ \uncover<5->{OK!}\\
-      \uncover<6->{\llbracket P_{x,g};P_{x,h};P \rrbracket^{\mathcal{A}}\alpha(S) > \llbracket P \rrbracket^{\mathcal{A}}\alpha(S) ?} ~~~~ \uncover<7-> {OK!}
-    \end{aligned}
-    \]
-  }
-  \uncover<8->{
-    \textcolor{red}{단, 항상 되는 건 아님!}
-  }
-\end{frame}
-
-
-\section{결론}
-\begin{frame}
-  \frametitle{결론}
-  \begin{itemize}
-    \uncover<1->{\item variable finiteness 상관 없이, 정적 분석 골탕먹이기가 항상 가능}
-    \uncover<2->{\item 정적 분석을 골탕먹이는 프로그램만으로도, 튜링 완전한 집합 형성}
-  \end{itemize}
-\end{frame}
-
-
-\section{한계점 및 발전 방향}
-\begin{frame}
-  \frametitle{한계점}
-
-  계속 ``존재성''만 얘기하고, 증명하고 있음
-  구체적으로 어떻게 프로그램을 변환하거나 찾는지에 대한 내용이 전혀 없음
-
-  \begin{itemize}
-    \uncover<2->{\item $S$를 어떻게 찾을 것인가?}
-    \uncover<3->{\item In$(S)$를 어떻게 프로그램으로 구현할 것인가?}
-  \end{itemize}
-  
-  \uncover<4->{0부터 합성하는 것이 아니라, 기존에 있던 프로그램을 변환시키는 방법을 사용할 것이라면 이 방법을 찾는 것이 목표}
-
-  \uncover<5->{혹은, 기계적으로는 \textcolor{red}{불가능}하다는 것을 증명하는 것이 목표}
-
-\end{frame}
-
-\begin{frame}
-  \frametitle{발전 방향}
-  \begin{itemize}
-    \item \uncover<1->{골탕 합성 연구의 기반은 Rice theorem에서 나온 존재성}
-    \item \uncover<2->{그러나 여전히 합성이 기계적으로 가능하다는 보장을 가지고 출발한 것은 아님}
-    \item \uncover<3->{이 논문의 아이디어를 응용, if문으로 구성된 기본 틀을 주고, 그 안을 합성하게 하는 방법을 생각해 보자}
-    \item \uncover<4->{+, Rice theorem을 직접적으로 활용하기 위해 while문을 기본 틀로 주는 것도 가능}
-  \end{itemize}
-
-  \begin{figure}[h]
-    \centering
-    \begin{subfigure}[t]{0.45\textwidth}
-        \centering
-        \uncover<3->{
-          \includegraphics[scale=0.3]{img/if빵꾸.png}
+  \begin{visibleenv}<2->
+    \begin{center}
+      \begin{tikzpicture}[x=0.75cm, y=0.75cm]
+        \draw[<->, thick] (-5.7,0) -- (5.7,0);
+        \foreach \x in {-5,-4,...,5} {
+          \draw[thick] (\x,0.12) -- (\x,-0.12);
+          \node[below] at (\x,-0.18) {\(\x\)};
         }
-    \end{subfigure}
-    \hfill
-    \begin{subfigure}[t]{0.45\textwidth}
-        \centering
-        \uncover<4->{
-          \includegraphics[scale=0.3]{img/while빵꾸.png}
+        \fill[red] (-3,0) circle (3pt);
+        \fill[red] (3,0) circle (3pt);
+        \draw[blue, line width=2pt]
+          (-3.18,-0.32) -- (-3.4,-0.32) -- (-3.4,0.32) -- (-3.18,0.32);
+        \draw[blue, line width=2pt]
+          (3.18,-0.32) -- (3.4,-0.32) -- (3.4,0.32) -- (3.18,0.32);
+        \node[blue, above] at (0,0.5) {\([ -3, 3 ]\)};
+        \fill[red] (-3,0) circle (3pt);
+        \fill[red] (3,0) circle (3pt);
+        \only<3->{
+          \draw[red, line width=1.5pt] (0,0) circle (3pt);
         }
-    \end{subfigure}
-  \end{figure}
+        \only<4->{
+          \node[overlay, below] at (0,-1.0)
+            {이런 공격을 일반적인 분석기에 대해서 하는 것이 목표};
+        }
+      \end{tikzpicture}
+    \end{center}
+  \end{visibleenv}
 \end{frame}
-  
 \begin{frame}
-  \frametitle{발전 방향}
-
+  \frametitle{공격의 기대효과}
   \begin{itemize}
-    \item ``실제로는 top이 아니다'' 를 어떻게 구성하면서 합성해나갈지는 여전히 남아 있는 문제
-    \item Giacobazzi의 다른 난독화 관련 논문들도 뒤져보기
-    \item 가짜 경보가 나는 (이미 있는)큰 프로그램을 깎아서 작은 조각을 만드는 방법을 쓸 때, 변환 아이디어를 적용할 수도
+    \item<2-> 분석기의 약점을 파악하고 강화하는 가이드라인으로 사용
+    \item<3-> 분석이 잘 안 되는 코드 조각을 삽입해서 난독화로 사용
   \end{itemize}
 \end{frame}
 
+\section{프로그램 합성과 증명나무 합성} %공격 성공 보장도 여기서 설명
+\begin{frame}
+  \frametitle{프로그램 합성}
+  \begin{itemize}
+    \item 주어진 성질을 만족하는 프로그램을 자동으로 생성!
+    \item "입력이 1, 2, 3, 4일 때 각각 1, 3, 6, 10이 나오는 프로그램을 만들어 줘" -> (코드)
+    \item "입력이 $x$이고 출력이 $y$일 때, $y^2 \le x < (y+1)^2$가 되는 프로그램을 만들어 줘" -> (코드)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{증명나무 합성}
+  \begin{itemize}
+    \item "분석기가 false alarm을 내는 프로그램을 만들어 줘"
+    \item buttom-up enumeration을 어떻게 흉내낼 수 있는지 설명
+  \end{itemize}
+\end{frame}
+
+\section{증명나무 합성 디테일}
+\begin{frame}
+  \frametitle{증명나무 합성 디테일}
+  \begin{itemize}
+    \item size 정의가 왜 중요한가, 2차원 size 순서 정렬
+    \item 프로그램 합성과 다르게 짝짜꿍이 잘 맞아야 됨
+    \item environment 제한
+    \item proof tree가 아닌 일반 코드 조각도 합성해야 함
+    \item pruning 방법, "분석기 존중"의 정의, 프로그램 합성에서의 pruning과 어떻게 다른지
+  \end{itemize}
+\end{frame}
+
+\section{결과}
+\begin{frame}
+  \frametitle{결과}
+  \begin{itemize}
+    \item 첫번째 결과 설명: while 0 처리 안됨
+    \item 두번째 결과 설명: interval widening
+    \item 분석기가 굉장히 약한 걸로 시작해서, 합성기와 평행하게 같이 강해지기
+  \end{itemize}
+\end{frame}
+
+\section{앞으로 할 일}
+\begin{frame}
+  \begin{itemize}
+    \item "좋은 proof tree 조각" 평가 휴리스틱
+    \item bottom up은 너무 많은 코드/증명 조각을 생성함. 좋은 쪽으로 많이 생성하려면?
+    \item "좋은 공격"이 뭔지 계속 다듬으면서 생각하기
+    \item pruning
+    \item llm guide
+    \item "비슷한 공격"들을 많이 제시해주는 건 의미가 없음. 비슷한 걸 거르고 다양하게 결과를 내주려면?
+  \end{itemize}
+\end{frame}
+
+
+
+% 감사합니다
 
 \definecolor{mydarkblue}{RGB}{32,56,61}
 
