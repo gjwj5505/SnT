@@ -31,7 +31,7 @@
 
 \newcommand{\textalt}[2]{#1\textsubscript{\ensuremath{\text{\scriptsize\textit{#2}}}}}
 \newcommand{\CILmm}{\texorpdfstring{CIL-\kern0.08em-}{CIL--}}
-\newcommand{\fainttablerow}{\\[-0.2ex]\arrayrulecolor{black!12}\hline\arrayrulecolor{black}}
+\newcommand{\fainttablerow}{\\[0.2ex]\arrayrulecolor{black!12}\hline\arrayrulecolor{black}}
 \newcommand*{\presentfont}[1]{{\fontspec{#1}#1}}
 \ExplSyntaxOn
 \bool_if:nF { \sys_if_engine_xetex_p: || \sys_if_engine_luatex_p: }
@@ -55,25 +55,47 @@
 
 \section{Sparrow 분석기 공격 목표}
 
+
 \begin{frame}
-  \frametitle{으에}
-  Sparrow가 sound하게 분석을 할 때,
-  complete하지 못한 부분이 있을 것. -> 어떤 간단한 프로그램에서 그게 나오는지 확인
-  sound하지 못한 부분도 있을 수 있음(버그) -> 이것도 하는김에 발견하면 좋음
+  \frametitle{Sparrow 공격 목표}
+  \begin{itemize}
+    \uncover<1->{
+      \item completeness 공격: 
+        \newline abstract semantics가 concrete semantics를 너무 크게 포함함
+        \newline (concrete = abstract인 그림) (concrete < abstract인 그림) (abstract = top인 그림)
+    }
+    \vspace{2em}
+    \uncover<2->{
+      \item soundness 공격: 
+        \newline concrete semantics가 abstract semantics에 포함되지 않음(버그)
+        \newline (concrete $\notin$ abstract인 그림)
+    }
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Sparrow의 기본 구조}
+  (C->CIL->CFG 의 예시 그림)
+
+  예시는 
+
+  int main() \{ int x = 1; if(x == 1) { x++; } return x; \}
+
+  정도로
 \end{frame}
 
 
 \section{\CILmm{} 언어}
 
 \begin{frame}
-  \frametitle{으에}
-  Sparrow는 CIL을 CFG로 변환한 것 위에서 분석
+  \frametitle{CIL 언어}
   CIL이 뭐냐, C의 부분집합 느낌. 분석을 쉽게 할 수 있는 언어
   애바하거나 복잡한 구조 단순화, side effect 제거, 정규화
 \end{frame}
 
 \begin{frame}
-  \frametitle{으에}
+  \frametitle{CIL-- 언어}
   completeness를 공격하기 위해서는 튜링 완전한 subset이기만 하면 충분
   soundness를 공격하기 위해서는 많은 feature가 있을수록 좋음(버그 찾는거니까)
 
@@ -130,82 +152,27 @@
   \frametitle{C 언어의 비결정성}
 
   {\scriptsize
-  \setlength{\tabcolsep}{1.6pt}
-  \renewcommand{\arraystretch}{0.95}
-  \begin{tabular}{@{}p{0.20\linewidth}p{0.30\linewidth}p{0.32\linewidth}p{0.12\linewidth}@{}}
+  \centering
+  \setlength{\tabcolsep}{2.0pt}
+  \renewcommand{\arraystretch}{1.08}
+  \begin{tabular}{@{}p{0.22\linewidth}p{0.31\linewidth}p{0.28\linewidth}p{0.16\linewidth}@{}}
     \toprule
     \textbf{예} & \textbf{C} & \textbf{CIL} & \textbf{\CILmm{}} \\
     \midrule
     \texttt{h(f(),g())} \newline \texttt{f()+g()} \newline \texttt{\{f(),g()\}} & 계산 순서 비결정 & 함수 호출은 expression으로 들어가지 않음 & OK \fainttablerow
     \texttt{sizeof(int[n++])} & \texttt{n++}을 실행하거나/하지 않거나 & \texttt{n++} 문법이 없음 & OK \fainttablerow
-    \texttt{i = i++ + 1;} & undefined behavior & \texttt{n++} 문법이 없음 & OK \fainttablerow
-    \texttt{int x; use(x);} & indeterminate value & 초기화 안 된 값의 의미는 남음 & \fainttablerow
+    \texttt{i = i++ + 1;} & undefined behavior & \texttt{i++} 문법이 없음 & OK \fainttablerow
+    \texttt{int x; use(x);} & indeterminate value & indeterminate value & 합성 시 생성 x\fainttablerow
     \texttt{"a" == "a"} & true/false 모두 가능 & 여전히 비결정적 & string 없음 \fainttablerow
     \texttt{char c = -1;} & -1/255 & 여전히 비결정적 & char 없음 \fainttablerow
-    \texttt{x >> 1} & \texttt{x} < 0 일 때, & 여전히 비결정적 & 어떡하지~ \\
+    \texttt{x >> 1} & \texttt{x} $< 0$ 일 때, & 여전히 비결정적 & 비트연산 없음 \fainttablerow
+    \texttt{malloc(n)} & 메모리 주소가 비결정적 & fresh object & fresh object \\
     \bottomrule
   \end{tabular}
   }
-\end{frame}
 
-\begin{frame}
-  \frametitle{C 언어의 비결정성}
-
-  {\scriptsize
-  \setlength{\tabcolsep}{1.6pt}
-  \renewcommand{\arraystretch}{0.95}
-  \begin{tabular}{@{}p{0.20\linewidth}p{0.30\linewidth}p{0.32\linewidth}p{0.12\linewidth}@{}}
-    \toprule
-    \textbf{예} & \textbf{C} & \textbf{CIL} & \textbf{\CILmm{}} \\
-    \midrule
-    \texttt{memcmp(\&s,...)} & padding byte 값 unspecified & object representation 문제로 남음 & \fainttablerow
-    \texttt{struct \{ int b:3; \}} & bit-field layout/storage unit & target layout 문제로 남음 & \fainttablerow
-    \texttt{\#define F ...} & translation-phase 선택 & CIL 이전에 사라짐 & \fainttablerow
-    \texttt{inline int f(...)} & inline/external 선택 unspecified 가능 & 변환/링킹에서 고정 & \\
-    \bottomrule
-  \end{tabular}
-  }
-\end{frame}
-
-\begin{frame}
-  \frametitle{C 언어의 비결정성}
-
-  {\scriptsize
-  \setlength{\tabcolsep}{1.6pt}
-  \renewcommand{\arraystretch}{0.95}
-  \begin{tabular}{@{}p{0.20\linewidth}p{0.30\linewidth}p{0.32\linewidth}p{0.12\linewidth}@{}}
-    \toprule
-    \textbf{예} & \textbf{C} & \textbf{CIL} & \textbf{\CILmm{}} \\
-    \midrule
-    \texttt{malloc(n)} & 주소, 실패, size 0 allocation & heap/library model 문제 & \fainttablerow
-    \texttt{realloc(p,n)} & 주소, 실패, 기존 블록 상태 & heap/library model 문제 & \fainttablerow
-    \texttt{qsort(a,n,...)} & equal element 결과 순서 unspecified & library semantics 문제 & \fainttablerow
-    \texttt{bsearch(k,a,...)} & equal key 중 반환 원소 unspecified & library semantics 문제 & \fainttablerow
-    \texttt{if (...) ...} & concrete state에서 결정적 & CFG 분기지만 nondeterminism 아님 & \fainttablerow
-    \texttt{*p = 1} & aliasing 자체는 nondeterminism 아님 & 메모리 관계로 남음 & \\
-    \bottomrule
-  \end{tabular}
-  }
-\end{frame}
-
-\begin{frame}
-  \frametitle{C 언어의 비결정성: 이런 것들도 있다}
-
-  {\scriptsize
-  \setlength{\tabcolsep}{1.6pt}
-  \renewcommand{\arraystretch}{0.95}
-  \begin{tabular}{@{}p{0.20\linewidth}p{0.30\linewidth}p{0.32\linewidth}p{0.12\linewidth}@{}}
-    \toprule
-    \textbf{예} & \textbf{C} & \textbf{CIL} & \textbf{\CILmm{}} \\
-    \midrule
-    \texttt{ungetc(c,fp)} & I/O stream 상태 & I/O environment & \fainttablerow
-    \texttt{ftell(fp)} & text stream 위치 표현 & I/O environment & \fainttablerow
-    \texttt{setlocale(...)} & locale-specific behavior & environment parameter & \fainttablerow
-    \texttt{getenv("X")} & 환경 변수 존재/값 & environment parameter & \fainttablerow
-    \texttt{signal(SIGINT,h)} & signal interleaving & 분석 범위 밖일 수 있음 & \fainttablerow
-    \texttt{atomic\_load(\&x)} & thread/memory-order & sequential 분석 밖 & \\
-    \bottomrule
-  \end{tabular}
+  \uncover<2->{
+    이외에도 malloc 실패 여부, struct의 byte 패딩, 정수 overflow 등 여러 가지 고려해야 할 비결정성이 많음
   }
 \end{frame}
 
