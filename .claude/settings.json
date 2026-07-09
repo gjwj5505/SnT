@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xelatex -interaction=nonstopmode -file-line-error tmp-a.tex)",
+      "Bash(pdftoppm -png -r 150 -f 6 -l 7 tmp-a.pdf __TRACKED_VAR__/cmp)",
+      "Bash(pdftoppm -png -r 150 -f 8 -l 8 tmp-a.pdf __TRACKED_VAR__/body)"
+    ]
+  }
+}

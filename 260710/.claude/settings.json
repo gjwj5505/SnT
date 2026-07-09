@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(convert -size 1200x750 xc:white -bordercolor gray -border 3 -gravity center -pointsize 40 -fill gray40 -annotate 0 'TODO\\\\n증명나무 \\(x=1\\)\\\\n여기에 이미지 교체' img/proof-tree-x1.png)",
+      "Bash(convert -size 1200x750 xc:white -bordercolor gray -border 3 -gravity center -pointsize 40 -fill gray40 -annotate 0 'TODO\\\\n증명나무 \\(x=2\\)\\\\n여기에 이미지 교체' img/proof-tree-x2.png)",
+      "Bash(xelatex -interaction=nonstopmode -halt-on-error tmp-b.tex)",
+      "Bash(rm -f tmp-b.aux tmp-b.nav tmp-b.out tmp-b.snm tmp-b.toc tmp-b.log tmp-b.vrb)",
+      "Bash(rm -f /tmp/claude-1000/-mnt-c-Users-JungWonJun-26633-ropas-SnT-260710/88edfd8d-837d-4696-aa81-df3122563c27/scratchpad/mslide*.png)",
+      "Bash(pdftoppm -png -r 130 -f 1 -l 6 \"/mnt/c/Users/JungWonJun/26633/ropas/SnT/260710/tmp-b.pdf\" /tmp/claude-1000/-mnt-c-Users-JungWonJun-26633-ropas-SnT-260710/88edfd8d-837d-4696-aa81-df3122563c27/scratchpad/mslide)"
+    ]
+  }
+}
