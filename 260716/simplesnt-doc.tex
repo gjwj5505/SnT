@@ -43,13 +43,147 @@
 \author{정원준}
 
 \begin{document}
-\date{2026년 7월 10일}
+\date{2026년 7월 16일}
 \maketitle
 
 
 \begin{frame}
   \frametitle{목차}
   \tableofcontents
+\end{frame}
+
+\section{정적 분석기 공격}
+\begin{frame}[c, fragile]
+  \frametitle{정적 분석이란?}
+
+  \setlength{\columnsep}{16pt}
+
+  \begin{columns}[T,onlytextwidth]
+    \column{0.46\textwidth}
+    \hfill
+    \begin{minipage}{0.78\linewidth}
+    \lstset{
+      language=Python,
+      basicstyle=\ttfamily\small,
+      lineskip=2pt,
+      columns=fullflexible,
+      escapeinside={(*@}{@*)},
+    }
+    \begin{lstlisting}
+x = 1
+while x < 10000:
+    (*@\textcolor{red}{x = x + 1}@*)
+print(x)
+    \end{lstlisting}
+    \end{minipage}
+
+    \column{0.54\textwidth}
+    \vspace{8pt}
+    \begin{itemize}
+      \item<2-> x가 어떤 값을 가질 수 있을까?
+      \item<3-> x가 특정 위치에서 어떤 값을 가질 수 있을까?
+      \item<4-> 프로그램을 돌려보지 않고 미리 알 수는 없을까?
+      \item<5-> \textcolor{red}{완벽하게 알 수는 없음!}
+      \item<6-> ``Rice's Theorem''
+    \end{itemize}
+  \end{columns}
+
+\end{frame}
+\begin{frame}[fragile]
+  \frametitle{넓게 어림잡기}
+
+  \begin{center}
+    \begin{minipage}{0.34\linewidth}
+      \begin{lstlisting}[basicstyle=\small\ttfamily, escapeinside={(*@}{@*)}]
+if x > 0:
+    x = 3
+else:
+    x = -3
+(*@\texttt{print(x)}@*)
+      \end{lstlisting}
+    \end{minipage}
+  \end{center}
+
+  \vspace{12pt}
+
+  \begin{center}
+    \begin{tikzpicture}[x=0.75cm, y=0.75cm]
+      \draw[<->, thick] (-5.7,0) -- (5.7,0);
+      \foreach \x in {-5,-4,...,5} {
+        \draw[thick] (\x,0.12) -- (\x,-0.12);
+        \node[below] at (\x,-0.18) {\(\x\)};
+      }
+      \only<2->{
+        \fill[red] (-3,0) circle (3pt);
+        \fill[red] (3,0) circle (3pt);
+      }
+      \uncover<3->{
+        \draw[blue, line width=2pt]
+          (-3.18,-0.32) -- (-3.4,-0.32) -- (-3.4,0.32) -- (-3.18,0.32);
+        \draw[blue, line width=2pt]
+          (3.18,-0.32) -- (3.4,-0.32) -- (3.4,0.32) -- (3.18,0.32);
+        \node[blue, above] at (0,0.5) {\([ -3, 3 ]\)};
+        \fill[red] (-3,0) circle (3pt);
+        \fill[red] (3,0) circle (3pt);
+      }
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{공격 프로그램의 예시}
+
+  \begin{center}
+    \begin{minipage}{0.34\linewidth}
+      \begin{visibleenv}<2->
+      \begin{lstlisting}[basicstyle=\small\ttfamily, escapeinside={(*@}{@*)}]
+if x > 0:
+    x = 3
+else:
+    x = -3
+(*@\only<2>{\texttt{print(x)}}\only<3->{\textcolor{red}{\texttt{y = 10 / x}}}@*)
+      \end{lstlisting}
+      \end{visibleenv}
+    \end{minipage}
+    \makebox[0pt][l]{\hspace{16pt}\visible<3->{\textcolor{red}{false alarm 발생}}}
+  \end{center}
+
+  \vspace{12pt}
+
+  \begin{visibleenv}<2->
+    \begin{center}
+      \begin{tikzpicture}[x=0.75cm, y=0.75cm]
+        \draw[<->, thick] (-5.7,0) -- (5.7,0);
+        \foreach \x in {-5,-4,...,5} {
+          \draw[thick] (\x,0.12) -- (\x,-0.12);
+          \node[below] at (\x,-0.18) {\(\x\)};
+        }
+        \fill[red] (-3,0) circle (3pt);
+        \fill[red] (3,0) circle (3pt);
+        \draw[blue, line width=2pt]
+          (-3.18,-0.32) -- (-3.4,-0.32) -- (-3.4,0.32) -- (-3.18,0.32);
+        \draw[blue, line width=2pt]
+          (3.18,-0.32) -- (3.4,-0.32) -- (3.4,0.32) -- (3.18,0.32);
+        \node[blue, above] at (0,0.5) {\([ -3, 3 ]\)};
+        \fill[red] (-3,0) circle (3pt);
+        \fill[red] (3,0) circle (3pt);
+        \only<3->{
+          \draw[red, line width=1.5pt] (0,0) circle (3pt);
+        }
+        \only<4->{
+          \node[overlay, below] at (0,-1.0)
+            {이런 공격을 일반적인 분석기에 대해서 하는 것이 목표};
+        }
+      \end{tikzpicture}
+    \end{center}
+  \end{visibleenv}
+\end{frame}
+\begin{frame}
+  \frametitle{공격의 기대효과}
+  \begin{itemize}
+    \item<2-> 분석기의 약점을 파악하고 강화하는 가이드라인으로 사용
+    \item<3-> 분석이 잘 안 되는 코드 조각을 삽입해서 난독화로 사용
+  \end{itemize}
 \end{frame}
 
 
@@ -61,7 +195,7 @@
   \frametitle{Sparrow 공격 목표}
   \begin{itemize}
     \uncover<1->{
-      \item completeness(정밀도) 공격:
+      \item 정밀도 공격:
         \newline abstract semantics가 concrete semantics를 너무 크게 포함함
         \par
         \vspace{0.6em}
@@ -256,10 +390,10 @@
   \begin{itemize}
     \item<1-> 가장 큰 문제: Sparrow는 concrete semantics를 정확히 정의하지 않음
       \begin{itemize}
-        \item<2-> C: ISO C 표준이 있지만 formal하진 않음
-        \item<3-> CIL: 마찬가지로 formal semantics가 없음
+        \item<2-> C: ISO C 표준이 있지만 자연어로 되어 있어서 엄밀하진 않음
+        \item<3-> CIL: 마찬가지로 엄밀한 실행의미가 없음
         \item<4-> Sparrow: 아예 없음
-        \item<5-> 공격기: \CILmm{}에 대한 big-step tree와 derivator는 있음
+        \item<5-> 공격기: \CILmm{}에 대한 big-step 나무구조와 증명 생성기는 있음
       \end{itemize}
     \item<6-> 그렇다면, 공격기의 concrete 실행의미가 Sparrow의 abstract 실행의미에
       포함되지 않을 때 ``soundness가 깨졌다''고 말할 수 있는가?
@@ -338,6 +472,20 @@
 \section{메모리를 포함하여 합성하는 방법}
 
 \begin{frame}
+  \frametitle{증명나무 합성과 메모리}
+  \begin{overlayarea}{\textwidth}{0.72\textheight}
+    \only<1>{\noindent\makebox[\textwidth][c]{\includegraphics[width=0.9\textwidth]{img/prog4.png}}}%
+    \only<2>{\noindent\makebox[\textwidth][c]{\includegraphics[width=0.9\textwidth]{img/proof4.png}}}%
+  \end{overlayarea}
+
+  \begin{itemize}
+    \item<1-> 프로그램 합성 대신 증명나무 합성 방식을 사용
+    \item<2-> 실행 의미가 존재하는 프로그램만을 뽑아내기 위함!
+    \item<3-> 증명나무에는 항상 메모리가 따라 붙음
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
   \frametitle{메모리는 코드를 따라 자연스럽게 나오는 것이 아닌가?}
   \begin{itemize}
     \item<1-> 완전한 프로그램은 그 자체로 메모리를 결정할 수 있음
@@ -360,7 +508,7 @@
 
 
 \begin{frame}
-  \frametitle{메모리를 같이 합성하지 않으면}
+  \frametitle{메모리를 최대한 나중에 결정하려고 하면...}
   \begin{center}
   \begin{tikzpicture}[
       treebox/.style={draw=black!25, rounded corners=2pt, inner sep=1pt},
@@ -550,6 +698,7 @@
       \begin{itemize}
         \item fibonacci.c만 해도 크기가 매우매우 큼.
         \item<5-> 재귀적으로 합성할 것/아닌 것을 구분해서 쉬운 step은 바로바로 진행되게끔 하는 전략이 필요할 듯
+        \item<6-> 재귀호출에서의 program size 역전 문제 해결
       \end{itemize}
   \end{itemize}
 
@@ -558,6 +707,29 @@
       \AtPageCenter{\makebox(0,0){\includegraphics[scale=0.10]{img/fibonacci.png}}}%
     }%
   }
+\end{frame}
+
+\begin{frame}
+  \frametitle{size 역전 현상}
+
+  \begin{itemize}
+    \item<1-> 원래 증명나무 합성은 (prog, proof) 크기 pair를 기준으로 작은 것부터 조립식으로 만들었음
+      \begin{overlayarea}{\textwidth}{0.5\textheight}
+        \only<1->{\noindent\makebox[\textwidth][c]{\includegraphics[width=0.9\textwidth,height=0.48\textheight,keepaspectratio]{img/pairsize.png}}}%
+      \end{overlayarea}
+    \item<2-> 크기 순서를 대각선($1,1 \rightarrow 2,1 \rightarrow 2,2 \rightarrow 3,1 \rightarrow \cdots$)으로 잡으면 모든 증명나무를 빠짐없이 탐색 가능
+    \item<3-> 그런데, 함수 call을 하는 순간 부분나무가 전체 나무보다 크기가 커지는 문제가 발생!
+  \end{itemize}
+
+    % (prog_size, proof_size)로 했더니, 함수 call을 했더니 subtree가 prog_size가 더 커지는 문제가 발생
+    % footprint 같은걸로 해도 여전히 이상함
+    % prog_size를 왜 도입했는지를 생각해보자.
+    % if() ``엄청 큰 코드'' 
+    % 같은 데서 ``엄청 큰 코드''가 마구 생겨서 stuck되는 경우를 방지하기 위해서였다.
+    % 이것만 해결하면 proof_size 순서만 사용해서 합성할 수 있지 않을까?
+    % 그러면 엄청 큰 코드는 다 완성된 코드에만 추후에 붙이는 걸로 하면 되지 않을까? 오!
+    % 생각해보니 실행 의미가 존재하는 프로그램만 합성하는건  P1 P2 ... 해서 한 스텝씩 실행시키는걸로도 가능하네? 대신 얘는 "빨리 하기" 기술이 적용이 잘 안 됨
+
 \end{frame}
 
 
