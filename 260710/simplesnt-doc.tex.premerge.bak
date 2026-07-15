@@ -1,0 +1,448 @@
+% !TeX root = simplesnt-doc.tex
+\documentclass{simplesnt}
+
+%% Helpful packages
+\usepackage{simplebnf}[2023/11/25]
+\usepackage{kotex}
+\usepackage{xcolor}
+\usepackage{amsmath,amssymb}
+\usepackage{amsfonts}
+\usepackage{tikz}
+\usetikzlibrary{calc,positioning,fit,arrows.meta,backgrounds}
+\usepackage{siunitx}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{mathrsfs}
+\usepackage{stmaryrd}
+\usepackage{subcaption}
+\usepackage{graphicx}
+\usepackage{colortbl}
+
+
+\captionsetup{font=small}
+\lstset{basicstyle = \small\ttfamily, breaklines}
+
+\usepackage{tabularray}
+\UseTblrLibrary{booktabs}
+
+\usepackage{metalogo}
+\usepackage{kotex-logo}
+
+
+\newcommand{\textalt}[2]{#1\textsubscript{\ensuremath{\text{\scriptsize\textit{#2}}}}}
+\newcommand{\CILmm}{\texorpdfstring{CIL-\kern0.08em-}{CIL--}}
+\newcommand{\fainttablerow}{\\[0.2ex]\arrayrulecolor{black!12}\hline\arrayrulecolor{black}}
+\newcommand*{\presentfont}[1]{{\fontspec{#1}#1}}
+\ExplSyntaxOn
+\bool_if:nF { \sys_if_engine_xetex_p: || \sys_if_engine_luatex_p: }
+  { \newcommand*{\fontspec}[1]{} }
+\ExplSyntaxOff
+
+\title{\CILmm{} 합성을 통한 Sparrow 분석기 공격}
+\author{정원준}
+
+\begin{document}
+\date{2026년 7월 10일}
+\maketitle
+
+
+\begin{frame}
+  \frametitle{목차}
+  \tableofcontents
+\end{frame}
+
+
+
+\section{Sparrow 분석기 공격 목표}
+
+
+\begin{frame}
+  \frametitle{Sparrow 공격 목표}
+  \begin{itemize}
+    \uncover<1->{
+      \item completeness 공격:
+        \newline abstract semantics가 concrete semantics를 너무 크게 포함함
+        \par
+        \vspace{0.6em}
+        \begin{center}
+        \hspace*{-1.5em}
+        \resizebox{0.9\textwidth}{!}{%
+        \begin{tikzpicture}[
+            abset/.style={draw=blue!55, fill=blue!8, thick, rounded corners=3pt},
+            conc/.style={circle, fill=red!80!black, inner sep=1.5pt},
+            panelcap/.style={align=center, font=\small},
+          ]
+          % --- Panel 1: concrete = abstract (blue coincides with red point) ---
+          \node[circle, draw=blue!55, fill=blue!30, thick, inner sep=0, minimum size=11pt] at (0,0) {};
+          \node[circle, fill=red!80!black, inner sep=0, minimum size=6pt] at (0,0) {};
+          \node[font=\small] at (0,-0.42) {$\{1\}$\,\textcolor{blue!55}{$=[1,1]$}};
+          \node[panelcap] at (0,-1.35) {concrete $=$ abstract};
+
+          % --- Panel 2: concrete < abstract (point & interval centered by box height) ---
+          \begin{scope}[xshift=3.7cm]
+            \draw[abset] (-1.25,-0.8) rectangle (1.25,0.8);
+            \node[conc, label={[font=\small]below:$\{1\}$}] at (-0.75,0) {};
+            \node[blue!55, font=\small] at (0.6,0) {$[0,10]$};
+            \node[panelcap] at (0,-1.35) {concrete $\subsetneq$ abstract};
+          \end{scope}
+
+          % --- Panel 3: abstract = top (point & interval centered by box height) ---
+          \begin{scope}[xshift=7.55cm]
+            \draw[abset] (-1.7,-0.9) rectangle (1.7,0.9);
+            \node[conc, label={[font=\small]below:$\{1\}$}] at (-0.9,0) {};
+            \node[blue!55, font=\small] at (0.5,0) {$\top=(-\infty,+\infty)$};
+            \node[panelcap] at (0,-1.35) {abstract $=\top$};
+          \end{scope}
+        \end{tikzpicture}}
+        \end{center}
+    }
+    \vspace{0.4em}
+    \uncover<2->{
+      \item soundness 공격:
+        \newline concrete semantics가 abstract semantics에 포함되지 않음(버그)
+        \par\vspace{0.5em}
+        \begin{center}
+        \begin{tikzpicture}[
+            abset/.style={draw=blue!55, fill=blue!8, thick, rounded corners=3pt},
+            conc/.style={circle, fill=red!80!black, inner sep=1.5pt},
+            panelcap/.style={align=center, font=\small},
+          ]
+          \draw[abset] (-1.0,-0.62) rectangle (1.0,0.62);
+          \node[blue!55, font=\small] at (0,0) {$[2,4]$};
+          \node[conc, label={[font=\small]below:$\{1\}$}] at (-1.8,0) {};
+          \node[panelcap] at (-0.4,-1.05) {concrete $\nsubseteq$ abstract};
+        \end{tikzpicture}
+        \end{center}
+    }
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Sparrow의 기본 구조}
+  \vspace{0.4em}
+  \begin{center}
+  \resizebox{0.98\textwidth}{!}{%
+  \begin{tikzpicture}[
+      codeblock/.style={draw=black!55, rounded corners=3pt, fill=black!5,
+        align=left, font=\ttfamily\scriptsize, inner sep=5pt},
+      cfgnode/.style={draw=blue!55, rounded corners=2pt, fill=blue!12,
+        align=center, font=\ttfamily\scriptsize, inner sep=3pt, minimum width=1.7cm},
+      graybox/.style={draw=black!55, rounded corners=3pt, fill=black!5, inner sep=8pt},
+      procbox/.style={draw=red!55, rounded corners=3pt, fill=red!8, thick,
+        align=center, font=\small, inner sep=7pt, minimum height=1.1cm},
+      resultbox/.style={draw=green!45!black, rounded corners=3pt, fill=green!8,
+        align=center, font=\small, inner sep=7pt},
+      flow/.style={-{Stealth[length=2.2mm]}, thick, black!70},
+      elbl/.style={font=\scriptsize\sffamily, black!70},
+    ]
+    % --- C code (input program) ---
+    \node[codeblock] (c) {%
+      int main() \{\\
+      \ \ int x = 1;\\
+      \ \ if (x == 1) \{\\
+      \ \ \ \ x++;\\
+      \ \ \}\\
+      \ \ return x;\\
+      \}};
+
+    % --- CIL code ---
+    \node[codeblock, right=1.7cm of c] (cil) {%
+      int main(void) \{\\
+      \ \ int x;\\
+      \ \ x = 1;\\
+      \ \ if (x == 1) \{\\
+      \ \ \ \ x = x + 1;\\
+      \ \ \}\\
+      \ \ return x;\\
+      \}};
+
+    % --- CFG (nodes, then gray box behind them) ---
+    \node[cfgnode, right=2.2cm of cil] (n0) {x = 1};
+    \node[cfgnode, below=0.45cm of n0] (n1) {x == 1 ?};
+    \node[cfgnode, below=0.45cm of n1] (n2) {x = x + 1};
+    \node[cfgnode, below=0.45cm of n2] (n3) {return x};
+    \coordinate (cfgR) at ([xshift=0.9cm]n2.east);
+    \draw[flow] (n0) -- (n1);
+    \draw[flow] (n1) -- (n2) node[elbl, midway, right=1pt]{T};
+    \draw[flow] (n2) -- (n3);
+    \draw[flow] (n1.east) .. controls +(0.9,0) and +(0.9,0) .. (n3.east)
+      node[elbl, pos=0.5, right=-1pt]{F};
+    \begin{scope}[on background layer]
+      \node[graybox, fit=(n0)(n3)(cfgR)] (cfg) {};
+    \end{scope}
+
+    % --- Sparrow analyzer + result ---
+    \node[procbox, right=1.9cm of cfg] (sp) {Sparrow\\[-1pt]{\scriptsize(정적분석)}};
+    \node[resultbox, right=1.4cm of sp] (res) {분석\\ 결과};
+
+    % --- flow arrows ---
+    \draw[flow] (c)   -- (cil) node[elbl, midway, above]{CIL 변환};
+    \draw[flow] (cil) -- (cfg) node[elbl, midway, above]{CFG 구성};
+    \draw[flow] (cfg) -- (sp)  node[elbl, midway, above]{입력};
+    \draw[flow] (sp)  -- (res);
+
+    % --- input label ---
+    \node[elbl, above=2pt of c] {입력 프로그램 (C)};
+  \end{tikzpicture}}
+  \end{center}
+\end{frame}
+
+
+\section{\CILmm{} 언어}
+
+\begin{frame}
+  \frametitle{CIL 언어}
+  CIL이 뭐냐, C의 부분집합 느낌. 분석을 쉽게 할 수 있는 언어
+  애매하거나 복잡한 구조 단순화, side effect 제거, 정규화
+\end{frame}
+
+\begin{frame}
+  \frametitle{\CILmm{} 언어}
+  completeness를 공격하기 위해서는 튜링 완전한 subset이기만 하면 충분(Rice Theorem 덕분)
+  soundness를 공격하기 위해서는 많은 feature가 있을수록 좋음(버그 찾는거니까)
+
+  CIL- : 의미적으로 관심없는 것들 제거, 나중에도 확장할 생각 없음 (typedef, struct 등)
+  \CILmm{} : 나중에 추가했으면 좋겠지만 일단 미니멀하게 가기 위해 제거 (포인터 + malloc/free, 배열, int 외 type)
+\end{frame}
+
+\section{실행의미를 Big-Step으로 정의}
+
+\begin{frame}
+  \frametitle{Big-Step 기본 구조}
+  CompCert의 Clight big-step 의미구조가 있긴한데, 여기서는 \CILmm{}에서의 의미구조를 직접 정의
+
+  expression은? 메모리를 보면서 정의
+  메모리는? stack(frame)과 heap이 있는데, 아직 heap은 없음
+
+  call은? frame을 하나 넣고, arg랑 로컬 변수 할당, return하는거까지 표현 (그림 넣기)
+\end{frame}
+
+
+\section{Sparrow의 실행의미와 대응시키기}
+
+\begin{frame}
+  \frametitle{실행 의미가 잘 정의되는가?}
+  C->CIL->CFG
+     ->\CILmm{} 구조.
+
+  가장 큰 문제: sparrow는 concrete semantics를 정확히 정의하지 않음. 
+
+  C: ISO C 표준이 있는데, formal하진 않음
+  CIL: 그런것도 없음. 
+  Sparrow: 얘도 아예 없음
+  공격기: \CILmm{}에 대한 big-step tree랑, derivator가 있긴 함
+
+  공격기의 concrete 실행의미가 Sparrow의 abstract 실행의미에 포함되지 않더라도, soundness가 깨졌다! 라고 말할 수 있는가?
+  (여기에 그림 넣기)
+
+  
+  C 언어의 비결정성 보기
+
+  각종 비결정성을 모두 제거해야 공격을 제대로 할 수 있음
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{C 언어의 비결정성}
+
+  {\scriptsize
+  \centering
+  \setlength{\tabcolsep}{2.0pt}
+  \renewcommand{\arraystretch}{1.08}
+  \begin{tabular}{@{}p{0.22\linewidth}p{0.31\linewidth}p{0.28\linewidth}p{0.16\linewidth}@{}}
+    \toprule
+    \textbf{예} & \textbf{C} & \textbf{CIL} & \textbf{\CILmm{}} \\
+    \midrule
+    \texttt{h(f(),g())} \newline \texttt{f()+g()} \newline \texttt{\{f(),g()\}} & 계산 순서 비결정 & 함수 호출은 expression으로 들어가지 않음 & OK \fainttablerow
+    \texttt{sizeof(int (*)[n++])} & \texttt{n++}을 실행하거나/하지 않거나 & \texttt{n++} 문법이 없음 & OK \fainttablerow
+    \texttt{i = i++ + 1;} & undefined behavior & \texttt{i++} 문법이 없음 & OK \fainttablerow
+    \texttt{int x; use(x);} & indeterminate value & indeterminate value & 합성 시 생성 x\fainttablerow
+    \texttt{"a" == "a"} & true/false 모두 가능 & 여전히 비결정적 & string 없음 \fainttablerow
+    \texttt{char c = -1;} & -1/255 & 여전히 비결정적 & char 없음 \fainttablerow
+    \texttt{x >> 1} & \texttt{x} $< 0$ 일 때, & 여전히 비결정적 & 비트연산 없음 \fainttablerow
+    \texttt{malloc(n)} & 메모리 주소가 비결정적 & fresh object & 포인터 없음 \\
+    \bottomrule
+  \end{tabular}
+  }
+
+  \uncover<2->{
+    이외에도 malloc 실패 여부, struct의 byte 패딩, signed 정수 overflow 등 여러 가지 고려해야 할 비결정성이 많음
+  }
+\end{frame}
+
+\section{메모리를 포함하여 합성하는 방법}
+
+\begin{frame}
+  \frametitle{메모리는 코드를 따라 자연스럽게 나오는 것이 아닌가?}
+  \uncover<1->{
+    완전한 프로그램은 그 자체로 메모리를 결정할 수 있음
+
+    int main(){
+      int x;
+      int y;
+      x = 1;
+      y = x + 1;
+      return x;
+    }
+  }
+  \uncover<2->{
+    반면 부분 프로그램은 앞뒤 메모리의 관계만 알 수 있음
+
+    (전)
+    y = x + 1;
+    (후)
+  }
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{메모리를 같이 합성하지 않으면}
+  \uncover<1->{
+    증명나무의 구조
+  }
+  \uncover<2->{
+    (x = 1; 에 해당하는 증명나무 그림)
+  }
+  \uncover<3->{
+    (y = x + 1; 에 해당하는 증명나무 그림)
+  }
+  \uncover<4->{
+    (둘을 합쳐서 연결한 그림)
+  }
+  \uncover<5->{
+    어 되나?
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{하지만 조건문, 반복문을 만나면...}
+  \uncover<1->{
+    (loop{if(x == 0) break; x = x - 1;};)
+
+  }
+  \uncover<2->{
+    (x = 3; loop{if(x == 0) break; x = x - 1;};)
+  }
+  \uncover<3->{
+    (x = 5; loop{if(x == 0) break; x = x - 1;};)
+  }
+  \uncover<4->{
+    조립이 잘 안 됨!
+  }
+  \uncover<5->{
+    후처리를 한다고 해도 무한히 돌거나 정지 문제를 해결해야 하는 딜레마에 빠짐
+  }
+  \uncover<6->{
+    따라서 메모리는 나중에 계산하면 안 되고, 작은 증명나무를 만들 때 전후 메모리가 확실하게 정해져야 한다.
+  }
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{합성 시 메모리 관리}
+  \uncover<1->{
+    실제 C 언어에서는 주소 연산을 통해 인접한 메모리를 마구 참조 가능하다. 특히 struct같은거 보면 적당히 포인터 + 1 연산같은걸로 주소 옮겨다니기 가능.
+  } 
+  \uncover<2->{
+    CIL, 혹은 \CILmm{}에서는 모든 변수가 외딴섬으로 존재해, 직접 그 변수를 통하지 않으면 해당 메모리 위치를 참조할 수 없게 한다.
+  }
+  \uncover<3->{
+    따라서 어느 정도는 {x mapsto 1, y mapsto 2} 이런 구조로 메모리를 생각할 수 있다.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{stack frame 관리}
+  \uncover<1->{
+    메모리에는 크게 heap, stack, global/static이 있다.
+  } 
+  \uncover<2->{
+    이 중 일단 stack만 보기로 하자.
+    다음 간단한 함수를 보자.
+    int f(int x){
+      if(x == 0) return 0;
+      return f(x - 1);
+    }
+  }
+  \uncover<3->{
+    main에서 f(2)를 호출했을 때 증명나무는 대략 다음과 같은 모양이다.
+    (증명나무)
+  }
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{그렇지만 모든 frame을 보기엔 너무 크다}
+  \uncover<1->{
+    마지막 f(0)이 호출되었을 때, 메모리 상태는 다음과 같다.
+    (3개 스택이 쌓인 모습)
+  } 
+  \uncover<2->{
+    그렇지만 모두가 알듯이, 중요한(당장 봐야 하는)건 top frame뿐이다.
+  }
+  \uncover<3>{
+    (모든 frame을 들고다니는 증명나무 그림)
+  }
+  \uncover<4->{
+    (top frame만 들고다니는 증명나무 그림)
+  }
+  \uncover<5->{
+    포인터를 인자로 받으면 이전 frame에 간섭이 가능하지만, 그것도 결국 따로 접근 가능한 location으로 두고, 조립할때 location을 연결하면 된다.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{결국 메모리 관리는}
+  \uncover<1->{
+    이제 합성에 필요한 메모리는 다시 {x mapsto 1, y mapsto 2} 꼴이므로,
+  } 
+  \uncover<2->{
+    (가능한 변수 이름(id) 목록, 가능한 값 목록)만 있으면 유한하게 메모리를 만들 수 있다.
+  }
+  \uncover<3->{
+    completeness 공격의 종료를 보장하기 위해서는 증명나무의 크기 증가와 함께 변수 이름, 가능한 값의 범위를 점차 넓혀가면 된다.
+  } 
+\end{frame}
+
+\section{앞으로 할 일}
+
+\begin{frame}
+  \frametitle{앞으로 할 일}
+
+  \uncover<1->{
+    -지금까지 한 일
+    syntax, semantics(big-step), interpreter(\CILmm{} 코드 -> big-step proof tree) 등등 기본적인거 구현 완료
+  }
+  
+  \uncover<2->{
+    -앞으로 할 일
+    bottom-up 기반으로 합성 시작
+    각종 가지치기(pruning), 휴리스틱을 통한 시간 단축
+    실행 중 AI 가이드?
+  }
+  
+  \uncover<3->{
+    -걱정거리
+    걱정거리: simple.c만 해도 크기가 매우매우 큼. (그림 삽입)
+    재귀적으로 합성할 것/아닌 것을 구분해서 쉬운 step은 바로바로 진행되게끔 하는 스킬이 필요할 듯
+  }
+\end{frame}
+
+
+
+% 감사합니다
+
+\definecolor{mydarkblue}{RGB}{32,56,61}
+
+\setbeamercolor{background canvas}{bg=mydarkblue}
+\setbeamercolor{normal text}{fg=white}
+\setbeamercolor{frametitle}{fg=white}
+\addtocounter{framenumber}{-1} % 마지막 슬라이드 번호를 하나 줄임
+\appendix
+\begin{frame}[c] % [c]는 내용 수직 가운데 정렬
+  \centering
+  {\Large \textcolor{white}{감사합니다}}
+\end{frame}
+
+\end{document}

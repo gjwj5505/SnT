@@ -375,10 +375,12 @@ else:
 \begin{frame}
   \frametitle{\CILmm{} 언어}
   \begin{itemize}
-    \item<1-> completeness 공격: 튜링 완전한 subset이기만 하면 충분 (Rice Theorem 덕분)
+    \item<1-> 정밀도 공격: 튜링 완전한 subset이기만 하면 충분 \\
+    (Rice Theorem 덕분)
     \item<2-> soundness 공격: feature가 많을수록 좋음 (버그를 찾는 것이므로)
-    \item<3-> CIL- : 의미적으로 관심 없는 것 제거 --- 확장 계획도 없음 (typedef, struct 등)
-    \item<4-> \CILmm{} : 일단 미니멀하게 만들기 위해 이것저것 제거 --- 나중에 추가 희망 (포인터·malloc/free, 배열, int 외 타입)
+    \item<3-> CIL- : 의미적으로 관심 없는 것 제거 --- 확장 계획도 없음 \\
+    (typedef, struct 등)
+    \item<4-> \CILmm{} : 일단 최소한으로 합성을 해보기 위해 이것저것 제거 --- 나중에 추가 희망 (포인터·malloc/free, 배열, int 외 타입)
   \end{itemize}
 \end{frame}
 
@@ -392,7 +394,7 @@ else:
       \begin{itemize}
         \item<2-> C: ISO C 표준이 있지만 자연어로 되어 있어서 엄밀하진 않음
         \item<3-> CIL: 마찬가지로 엄밀한 실행의미가 없음
-        \item<4-> Sparrow: 아예 없음
+        \item<4-> Sparrow: 실행 의미가 sound in design이라고 주장할 뿐, concrete semantics를 정의하지 않음
         \item<5-> 공격기: \CILmm{}에 대한 big-step 나무구조와 증명 생성기는 있음
       \end{itemize}
     \item<6-> 그렇다면, 공격기의 concrete 실행의미가 Sparrow의 abstract 실행의미에
@@ -473,15 +475,25 @@ else:
 
 \begin{frame}
   \frametitle{증명나무 합성과 메모리}
-  \begin{overlayarea}{\textwidth}{0.72\textheight}
-    \only<1>{\noindent\makebox[\textwidth][c]{\includegraphics[width=0.9\textwidth]{img/prog4.png}}}%
-    \only<2>{\noindent\makebox[\textwidth][c]{\includegraphics[width=0.9\textwidth]{img/proof4.png}}}%
-  \end{overlayarea}
+  \only<2>{
+    \begin{overlayarea}{\textwidth}{0.72\textheight}
+      \noindent\makebox[\textwidth][c]{\includegraphics[width=0.9\textwidth]{img/prog4.png}}
+    \end{overlayarea}
+  }
+  \only<3>{
+    \begin{overlayarea}{\textwidth}{0.72\textheight}
+      \noindent\makebox[\textwidth][c]{\includegraphics[width=0.9\textwidth]{img/proof4.png}}
+    \end{overlayarea}
+  }
 
   \begin{itemize}
-    \item<1-> 프로그램 합성 대신 증명나무 합성 방식을 사용
-    \item<2-> 실행 의미가 존재하는 프로그램만을 뽑아내기 위함!
-    \item<3-> 증명나무에는 항상 메모리가 따라 붙음
+    \item<1,4-> 프로그램 합성 대신 증명나무 합성 방식을 사용
+    \item<5-> 실행 의미가 존재하는 프로그램만을 뽑아내기 위함!
+    \begin{itemize}
+      \item <6-> 프로그램을 먼저 합성하면 실행 의미가 존재하는지 확인이 불가능
+      (Rice's Theorem)
+    \end{itemize}
+    \item<7-> 증명나무에는 항상 메모리가 따라 붙음
   \end{itemize}
 \end{frame}
 
@@ -578,7 +590,7 @@ else:
     \item<1-> 실제 C 언어에서는 주소 연산을 통해 인접한 메모리를 마구 참조 가능하다.
     \item<2-> 특히 struct를 보면 적당히 포인터 + 1 연산을 이용해 인접 변수에 접근 가능.
     \item<3-> CIL, 혹은 \CILmm{}에서는 모든 변수가 외딴섬으로 존재해, 직접 그 변수를 통하지 않으면 해당 메모리 위치를 참조할 수 없게 한다. (포인터 제외)
-    \item<4-> 따라서 어느 정도는 $\{x \mapsto 1,\ y \mapsto 2\}$ 이런 구조로 메모리를 생각할 수 있다.
+    \item<4-> 따라서 $\{x \mapsto 1,\ y \mapsto 2\}$ 와 같은 구조로 메모리를 생각할 수 있다.
   \end{itemize}
   \only<2>{%
     \AddToShipoutPictureFG*{%
@@ -629,9 +641,9 @@ else:
         frame/.style={draw=none, fill=none,
           minimum width=3.4cm, minimum height=1cm, font=\ttfamily\small},
       ]
-      \node[frame] (f2) at (0,0.5) {f(2): x = 2};
-      \node[frame] (f1) at (0,1.5) {f(1): x = 1};
-      \node[frame] (f0) at (0,2.5) {f(0): x = 0};
+      \node[frame] (f2) at (0,0.5) {f(2): x $\mapsto$ 2};
+      \node[frame] (f1) at (0,1.5) {f(1): x $\mapsto$ 1};
+      \node[frame] (f0) at (0,2.5) {f(0): x $\mapsto$ 0};
       \draw[black, thick] (-1.7,0) rectangle (1.7,3);
       \draw[black, thick] (-1.7,1) -- (1.7,1);
       \draw[black, thick] (-1.7,2) -- (1.7,2);
@@ -665,7 +677,8 @@ else:
   }
 
   \begin{itemize}
-    \item<3-> 포인터를 인자로 받으면 이전 frame에 간섭이 가능하지만, 그것도 결국 따로 접근 가능한 location으로 두고, 조립할때 location을 연결하면 된다.
+    \item<3-> 증명나무를 합성하는데 아무런 문제가 발생하지 않는다!
+    \item<4-> root부터 프레임을 쌓아가는 방식으로 보면 스택의 역추적도 가능
   \end{itemize}
 \end{frame}
 
@@ -674,7 +687,7 @@ else:
   \begin{itemize}
     \item<1-> 이제 합성에 필요한 메모리는 다시 $\{x \mapsto 1,\ y \mapsto 2\}$ 꼴이므로,
     \item<2-> (가능한 변수 이름(id) 목록, 가능한 값 목록)만 있으면 유한하게 메모리를 만들 수 있다.
-    \item<3-> completeness 공격의 종료를 보장하기 위해서는 증명나무의 크기 증가와 함께 변수 이름, 가능한 값의 범위를 점차 넓혀가면 된다.
+    \item<3-> 정밀도 공격의 종료를 보장하기 위해서는 증명나무의 크기 증가와 함께 변수 이름, 가능한 값의 범위를 점차 넓혀가면 된다.
   \end{itemize}
 \end{frame}
 
@@ -713,12 +726,14 @@ else:
   \frametitle{size 역전 현상}
 
   \begin{itemize}
-    \item<1-> 원래 증명나무 합성은 (prog, proof) 크기 pair를 기준으로 작은 것부터 조립식으로 만들었음
-      \begin{overlayarea}{\textwidth}{0.5\textheight}
-        \only<1->{\noindent\makebox[\textwidth][c]{\includegraphics[width=0.9\textwidth,height=0.48\textheight,keepaspectratio]{img/pairsize.png}}}%
-      \end{overlayarea}
+    \item<1-> 원래 증명나무 합성은 (prog, proof) 크기 쌍을 기준으로 작은 것부터 조립식으로 만들었음
+      \par
+      \hspace*{-\leftmargini}% itemize 들여쓰기를 상쇄해 frame 중앙에 맞춤
+      \makebox[\textwidth][c]{%
+        \includegraphics[width=0.9\textwidth]{img/pairsize.png}%
+      }
     \item<2-> 크기 순서를 대각선($1,1 \rightarrow 2,1 \rightarrow 2,2 \rightarrow 3,1 \rightarrow \cdots$)으로 잡으면 모든 증명나무를 빠짐없이 탐색 가능
-    \item<3-> 그런데, 함수 call을 하는 순간 부분나무가 전체 나무보다 크기가 커지는 문제가 발생!
+    \item<3-> 그런데, 함수 호출을 하는 순간 부분나무가 전체 나무보다 크기가 커지는 문제가 발생!
   \end{itemize}
 
     % (prog_size, proof_size)로 했더니, 함수 call을 했더니 subtree가 prog_size가 더 커지는 문제가 발생
